@@ -86,6 +86,13 @@ class ExchangeWebServices
      * @var string
      */
     protected $username;
+    
+    /**
+     * Domain to use when connecting to the Exchange server.
+     *
+     * @var string
+     */
+    protected $domain;
 
     /**
      * Exchange impersonation
@@ -118,13 +125,16 @@ class ExchangeWebServices
         $server = null,
         $username = null,
         $password = null,
-        $version = self::VERSION_2007
+        $domain = null,
+        $version = self::VERSION_2007_SP1
+        
     ) {
         // Set the object properties.
         $this->setServer($server);
         $this->setUsername($username);
         $this->setPassword($password);
         $this->setVersion($version);
+        $this->setDomain($domain);
     }
 
     /**
@@ -194,6 +204,18 @@ class ExchangeWebServices
     {
         $this->version = $version;
 
+        return true;
+    }
+    
+    /**
+     * Sets the domain property
+     *
+     * @param string $domain
+     */
+    public function setDomain($domain)
+    {
+        $this->domain = $domain;
+    
         return true;
     }
 
@@ -696,15 +718,23 @@ class ExchangeWebServices
      */
     protected function initializeSoapClient()
     {
-        $this->soap = new NTLMSoapClient_Exchange(
-            dirname(__FILE__).'/wsdl/services.wsdl',
-            array(
+        $options = array(
+                'trace' => 1,
+                'exceptions' => true,
+                'login' => $this->username,
                 'user' => $this->username,
                 'password' => $this->password,
                 'version' => $this->version,
+                'domain' => $this->domain,
+                'host' => $this->server,
+                'url' => '/EWS/Services.wsdl',
                 'location' => 'https://'.$this->server.'/EWS/Exchange.asmx',
                 'impersonation' => $this->impersonation,
-            )
+            );
+
+        $this->soap = new NTLMSoapClient_Exchange(
+            dirname(__FILE__).'/wsdl/services.wsdl',
+            $options
         );
 
         return $this->soap;
@@ -723,8 +753,11 @@ class ExchangeWebServices
      */
     protected function processResponse($response)
     {
+        //FB::log('this.soap');
+        //FB::log($this->soap);
         // If the soap call failed then we need to thow an exception.
         $code = $this->soap->getResponseCode();
+        //FB::log($code);
         if ($code != 200) {
             throw new EWS_Exception('SOAP client returned status of '.$code, $code);
         }

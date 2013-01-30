@@ -28,6 +28,13 @@ class NTLMSoapClient_Exchange extends NTLMSoapClient
      * @var string
      */
     protected $password;
+    
+    /**
+     * Domain for authentication on the exchange server
+     *
+     * @var string
+     */
+    protected $domain;
 
     /**
      * Constructor
@@ -45,7 +52,11 @@ class NTLMSoapClient_Exchange extends NTLMSoapClient
         // Set the username and password properties.
         $this->user = $options['user'];
         $this->password = $options['password'];
-
+        $this->domain = !empty($options['domain']) ? $options['domain'] : null;
+        $this->location = !empty($options['location']) ? $options['location'] : null;  
+        $this->host = !empty($options['host']) ? $options['host'] : null;
+        $this->url = !empty($options['url']) ? $options['url'] : null;
+        
         // If a version was set then add it to the headers.
         if (!empty($options['version'])) {
             $this->__default_headers[] = new SoapHeader(
@@ -64,15 +75,5 @@ class NTLMSoapClient_Exchange extends NTLMSoapClient
         }
 
         parent::__construct($wsdl, $options);
-    }
-
-    /**
-     * Returns the response code from the last request
-     *
-     * @return integer
-     */
-    public function getResponseCode()
-    {
-        return curl_getinfo($this->ch, CURLINFO_HTTP_CODE);
     }
 }
